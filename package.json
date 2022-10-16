@@ -1,9 +1,17 @@
 {
   "scripts": {
-    "deploy:localhost": "npx hardhat run scripts/deploy.js --network localhost",
-    "deploy:goerli": "npx hardhat run scripts/deploy.js --network goerli",
-    "deploy:kovan": "npx hardhat run scripts/deploy.js --network kovan",
-    "test": "npx hardhat test"
+    "deploy:localhost": "yarn clean && npx hardhat run scripts/deployNFT.js --network localhost",
+    "deploy:goerli": "yarn clean && npx hardhat run scripts/deployNFT.js --network goerli",
+    "deploy:kovan": "yarn clean && npx hardhat run scripts/deployNFT.js --network kovan",
+    "pre-deploy": "yarn clean",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "clean": "npx hardhat clean"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.3",
+    "@openzeppelin/contracts-upgradeable": "^4.8.0-rc.1",
+    "@openzeppelin/hardhat-upgrades": "^1.21.0"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
