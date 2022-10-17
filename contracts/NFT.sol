@@ -5,14 +5,15 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
   using StringsUpgradeable for uint256;
 
-  using Counters for Counters.Counter;
-  Counters.Counter private _nextTokenId;
+  using CountersUpgradeable for CountersUpgradeable.Counter;
+  CountersUpgradeable.Counter private _nextTokenId;
 
   uint256 public price;
   uint256 public constant maxSupply = 100;
@@ -23,23 +24,26 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
   
   string public baseURI;
   bytes32 public merkleRoot;
-
+  bytes32 public leaf;
   uint256 public userMintLimit;
-  uint256 public ownerMintLimit;
 
   mapping(uint256 => string) private _tokenURIs;
   mapping(address => uint256) public addressMintedBalance;
+  mapping(address => bool) public whitelistClaimed;
   
   function initialize() initializer public{
     __ERC721_init("AppWorks", "AW");
+    __Ownable_init();
+    __UUPSUpgradeable_init();
+
     price = 0.01 ether;
 
     mintActive = false;
     earlyMintActive = false;
     revealed = false;
 
-    userMintLimit = 10;
-    ownerMintLimit = 20;
+    userMintLimit = msg.sender == owner()? 20 : 10;
+    leaf = keccak256(abi.encodePacked(msg.sender));
   }
 
 
@@ -48,8 +52,8 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
     //Please make sure you check the following things:
 
     //Current state is available for Public Mint
-    require(mintActive == true, "oops! state is not available for mint :-( ");
-    
+    require(mintActive, "oops! state is not available for mint :-( ");
+
     //Check how many NFTs are available to be minted
     require(maxSupply >= _nextTokenId.current() + _mintAmount, "mint amount is not available :-( ");
 
@@ -57,12 +61,9 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
     require(msg.value >= _mintAmount * price, "so sad, you are not rich enough :-( ");
 
     addressMintedBalance[msg.sender] += _mintAmount;
-    for(uint i = 1; i < _mintAmount; i++) {
-      uint tokenId = _nextTokenId.current();
-
-      _safeMint(msg.sender, tokenId);
+    for (uint i = 0; i < _mintAmount; i++) {
+        _safeMint(msg.sender, _nextTokenId.current());
       _nextTokenId.increment();
-      _tokenURIs[tokenId] = tokenURI(tokenId);
     }
   }
   
@@ -94,9 +95,7 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
   modifier mintLimit(uint256 _mintAmount) {
       require(_mintAmount > 0, "mintAmount must larger than 0");
-
-      if(msg.sender == owner()) require(addressMintedBalance[msg.sender] + _mintAmount <= ownerMintLimit, "ownerMintLimit is 20");
-      else require(addressMintedBalance[msg.sender] + _mintAmount <= userMintLimit, "userMintLimit is 10");
+      require(addressMintedBalance[msg.sender] + _mintAmount <= userMintLimit, "mint amount must less than limit");
       
       _;
   }
@@ -120,7 +119,7 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
   function earlyMint(bytes32[] calldata _merkleProof, uint256 _mintAmount) public payable {
     //Please make sure you check the following things:
     //Current state is available for Early Mint
-    require(earlyMintActive == true, "not available for public mint currently");
+    require(earlyMintActive, "not available for public mint currently");
 
     //Check how many NFTs are available to be minted
     require(_nextTokenId.current() + _mintAmount <= maxSupply, "no more token suppliy");
@@ -130,8 +129,10 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
     require(msg.value >= _mintAmount * price, "value is not enough");
     
     //Check user is in the whitelist - use merkle tree to validate
-    require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "not in whitelist");
+    require (!whitelistClaimed[msg.sender], "Alreadly claimed!");
+    require(MerkleProof.verify(_merkleProof, merkleRoot, leaf), "not in whitelist");
     
+    whitelistClaimed[msg.sender] = true;
     for (uint256 i = 0; i < _mintAmount; i++) {
       _safeMint(msg.sender, _nextTokenId.current());
       _nextTokenId.increment();
@@ -151,5 +152,4 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
   // Let this contract can be upgradable, using openzepplin proxy library - week 10
   // Try to modify blind box images by using proxy 
   function _authorizeUpgrade(address) internal override onlyOwner {}
-  
 }

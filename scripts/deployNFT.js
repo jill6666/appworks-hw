@@ -8,17 +8,25 @@ const { ethers, upgrades } = require('hardhat');
 
 async function main() {
   try {
-    /**  */
+    const [deployer] = await ethers.getSigners();
+    console.log(
+      `💘💘💘[INFO]: ${deployer.address} is deploying the contract ~~ 😇😇😇`
+    );
+
     const NFT = await ethers.getContractFactory('NFT');
-    const proxyNFT = await upgrades.deployProxy(NFT);
+    const proxyNFT = await upgrades.deployProxy(NFT, {
+      initializer: 'initialize',
+      kind: 'uups',
+    });
+    console.log(`💘💘💘[INFO]: ready for deploy proxyNFT ~~ 😇😇😇`);
 
     await proxyNFT.deployed();
 
     console.log(
-      `✅[SUCCESS]: NFT contract deployed to ${proxyNFT.address} ~~ 😇😇😇`
+      `✅✅✅[SUCCESS]: NFT contract deployed to ${proxyNFT.address} ~~ 😇😇😇`
     );
   } catch (error) {
-    console.error('🙉🙉🙉 [ERROR]: ', error);
+    console.error('🙉🙉🙉[ERROR]: ', error);
     process.exitCode = 1;
   }
 }
