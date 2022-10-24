@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
-contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
+contract NFT is ERC721Upgradeable, OwnableUpgradeable {
   using StringsUpgradeable for uint256;
-
   using CountersUpgradeable for CountersUpgradeable.Counter;
+
   CountersUpgradeable.Counter private _nextTokenId;
 
   uint256 public price;
@@ -25,7 +23,6 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
   string public baseURI;
   bytes32 public merkleRoot;
   bytes32 public leaf;
-  uint256 public userMintLimit;
 
   mapping(uint256 => string) private _tokenURIs;
   mapping(address => uint256) public addressMintedBalance;
@@ -33,8 +30,6 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
   
   function initialize() initializer public{
     __ERC721_init("AppWorks", "AW");
-    __Ownable_init();
-    __UUPSUpgradeable_init();
 
     price = 0.01 ether;
 
@@ -42,7 +37,10 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
     earlyMintActive = false;
     revealed = false;
 
-    userMintLimit = msg.sender == owner()? 20 : 10;
+    // V2 baseURI
+    baseURI = "ipfs://QmNa8mQkrNKp1WEEeGjFezDmDeodkWRevGFN8JCV7b4Xir";
+    // V1 baseURI
+    // baseURI = "ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg";
     leaf = keccak256(abi.encodePacked(msg.sender));
   }
 
@@ -92,10 +90,12 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
   }
 
   // Set mint per user limit to 10 and owner limit to 20 - Week 8
-
+  function _userLimit() internal view returns (uint256) {
+    return msg.sender == owner()? 20 : 10;
+  }
   modifier mintLimit(uint256 _mintAmount) {
       require(_mintAmount > 0, "mintAmount must larger than 0");
-      require(addressMintedBalance[msg.sender] + _mintAmount <= userMintLimit, "mint amount must less than limit");
+      require(addressMintedBalance[msg.sender] + _mintAmount <= _userLimit(), "mint amount must less than limit");
       
       _;
   }
@@ -115,6 +115,12 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
     return baseURI;
   }
 
+  function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    _requireMinted(tokenId);
+
+    return string.concat(_baseURI(), "/", tokenId.toString(), ".jpg");
+  }
+
   // Early mint function for people on the whitelist - week 9
   function earlyMint(bytes32[] calldata _merkleProof, uint256 _mintAmount) public payable {
     //Please make sure you check the following things:
@@ -130,7 +136,7 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
     
     //Check user is in the whitelist - use merkle tree to validate
     require (!whitelistClaimed[msg.sender], "Alreadly claimed!");
-    require(MerkleProof.verify(_merkleProof, merkleRoot, leaf), "not in whitelist");
+    require(MerkleProofUpgradeable.verify(_merkleProof, merkleRoot, leaf), "not in whitelist");
     
     whitelistClaimed[msg.sender] = true;
     for (uint256 i = 0; i < _mintAmount; i++) {
@@ -151,5 +157,5 @@ contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgrad
 
   // Let this contract can be upgradable, using openzepplin proxy library - week 10
   // Try to modify blind box images by using proxy 
-  function _authorizeUpgrade(address) internal override onlyOwner {}
+  function _authorizeUpgrade(address) internal onlyOwner {}
 }
