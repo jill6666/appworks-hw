@@ -14,18 +14,9 @@ async function main() {
 
     const NFT = await ethers.getContractFactory('NFT');
     console.log(`💘💘💘[INFO]: ready for deploy proxyNFT ~~ 😇😇😇`);
-    const proxyNFT = await upgrades.deployProxy(NFT);
-    await proxyNFT.deployed();
+    const proxyNFT = await NFT.deploy();
 
-    console.log('Proxy 合約地址', proxyNFT.address);
-    console.log(
-      '管理合約地址 getAdminAddress',
-      await upgrades.erc1967.getAdminAddress(proxyNFT.address)
-    );
-    console.log(
-      '邏輯合約地址 getImplementationAddress',
-      await upgrades.erc1967.getImplementationAddress(proxyNFT.address)
-    );
+    await proxyNFT.deployed();
 
     console.log(
       `✅✅✅[SUCCESS]: NFT contract deployed to ${proxyNFT.address} ~~ 😇😇😇`

@@ -7,7 +7,9 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 
-contract NFT is ERC721Upgradeable, OwnableUpgradeable {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+contract NFT is Initializable, ERC721Upgradeable, OwnableUpgradeable {
   using StringsUpgradeable for uint256;
   using CountersUpgradeable for CountersUpgradeable.Counter;
 
