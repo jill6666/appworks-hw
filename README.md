@@ -1,11 +1,21 @@
 # AppWorks Homework
+
 get started
 
-```
+```bash
+# 請確認裝置有 node 及 hardhat 環境
+nvm use v16.13.1
+
+# install dependencies
 yarn
+
+# 用 yarn 指令執行 scripts，詳至 package.json 看 scripts
+yarn dev
+yarn test ./test/Compound.js
 ```
 
 題目說明：
+
 ```
 請賞析 Compound 的合約，並依序實作以下
 
