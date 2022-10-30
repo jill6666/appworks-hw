@@ -8,15 +8,26 @@ describe('Compound', function () {
   let interestRateModel;
   let accounts;
 
+  /**
+   * @param {String} supply default '0'
+   * @param {Number} dicimal default 18
+   * @returns
+   */
   const getParseUnits = (supply = '0', dicimal = 18) => {
     return ethers.utils.parseUnits(supply, dicimal);
   };
+
+  /**
+   * @description log 出 user 擁有的 token balance
+   * @param {String} userAddr
+   * @param {String} token token name e.g. 'cErc20'
+   */
   const logUserBalance = async (userAddr, token) => {
     const TOKEN_BALANCE = {
       erc20: ethers.utils.formatUnits(await erc20?.balanceOf(userAddr), 18),
       cErc20: ethers.utils.formatUnits(await cErc20?.balanceOf(userAddr), 18),
     };
-    if (!TOKEN_BALANCE[token]) return;
+    if (!TOKEN_BALANCE[token]) console.log(`[🙉 WARNING] no token support!`);
 
     console.log(
       `[🔍 INFO] balance of ${userAddr}: { ${token}: ${TOKEN_BALANCE[token]}}`
@@ -26,6 +37,7 @@ describe('Compound', function () {
   it('部署 cErc20 需要的參數', async function () {
     /**
      * 部署 Comptroller
+     * [題目]: 使用 SimplePriceOracle 作為 Oracle
      */
     const comptrollerFactory = await ethers.getContractFactory('Comptroller');
     comptroller = await comptrollerFactory?.deploy();
@@ -59,7 +71,7 @@ describe('Compound', function () {
     );
     /**
      * [題目]: 初始 exchangeRate 為 1:1
-     * [題目]: 將利率模型合約中的借貸利率設定為 0%
+     * [題目]: 將利率模型合約中的借貸利率設定為 0% ❔
      */
     interestRateModel = await interestRateModelFactory?.deploy(
       getParseUnits(),
@@ -93,8 +105,6 @@ describe('Compound', function () {
   });
   it('should be able to mint/redeem with TestToken', async function () {
     /**
-     * TODO:  SimplePriceOracle, mint/ redeem
-     * [題目]: 使用 SimplePriceOracle 作為 Oracle
      * [題目]: User1 使用 100 顆（100 * 10^18） ERC20 去 mint 出 100 CErc20 token
      *        再用 100 CErc20 token redeem 回 100 顆 ERC20
      */

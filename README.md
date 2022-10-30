@@ -13,7 +13,7 @@ yarn
 # 用 yarn 指令執行 scripts，詳至 package.json 看 scripts
 yarn dev
 
-# 開另一個 terminal, node version 要記得調整
+# 開另一個 terminal, 要記得調整 node version
 yarn test ./test/Compound.js
 ```
 
@@ -23,11 +23,11 @@ yarn test ./test/Compound.js
 請賞析 Compound 的合約，並依序實作以下
 
 1. 在 Hardhat 的 test 中部署一個 CErc20(CErc20.sol)，一個 Comptroller(Comptroller.sol) 以及合約初始化時相關必要合約，請遵循以下細節：
-- CToken 的 decimals 皆為 18
-- 需部署一個 CErc20 的 underlying ERC20 token，decimals 為 18
-- 使用 SimplePriceOracle 作為 Oracle
-- 將利率模型合約中的借貸利率設定為 0%
-- 初始 exchangeRate 為 1:1
+- ✅ CToken 的 decimals 皆為 18
+- ✅ 需部署一個 CErc20 的 underlying ERC20 token，decimals 為 18
+- ✅ 使用 SimplePriceOracle 作為 Oracle
+- ❔ 將利率模型合約中的借貸利率設定為 0%
+- ✅ 初始 exchangeRate 為 1:1
 - 進階(Optional)： 使用 Compound 的 Proxy 合約（CErc20Delegator.sol and Unitroller.sol)
 
 2. 讓 user1 mint/redeem CErc20，請透過 Hardhat test case 實現以下場景
