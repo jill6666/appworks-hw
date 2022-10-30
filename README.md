@@ -4,6 +4,7 @@ get started
 
 ```bash
 # 請確認裝置有 node 及 hardhat 環境
+# Expected version "^14.0.0 || ^16.0.0 || ^18.0.0"
 nvm use v16.13.1
 
 # install dependencies
@@ -11,6 +12,8 @@ yarn
 
 # 用 yarn 指令執行 scripts，詳至 package.json 看 scripts
 yarn dev
+
+# 開另一個 terminal, node version 要記得調整
 yarn test ./test/Compound.js
 ```
 

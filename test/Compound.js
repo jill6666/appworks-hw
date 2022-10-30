@@ -54,41 +54,26 @@ describe('Compound', function () {
 
         return { comptroller, erc20, interestRateModel };
       };
+      const { comptroller, erc20, interestRateModel } = await getCErc20Params();
 
       /**
        * 部署 CErc20
        */
-      const cErc20Factory = await ethers.getContractFactory('CErc20');
-      const cErc20 = await cErc20Factory.deploy();
-      await cErc20.deployed();
-
-      console.log('[✅ SUCCESS] cErc20 address: ', cErc20?.address);
-
-      /**
-       * initialize cErc20
-       * 因為 CErc20 繼承 CToken 有兩個 Intializer要用 ["initialize..."] 的方式
-       *
-       * @notice Initialize the new money market
-       * @param underlying_ The address of the underlying asset
-       * @param comptroller_ The address of the Comptroller
-       * @param interestRateModel_ The address of the interest rate model
-       * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
-       * @param name_ ERC-20 name of this token
-       * @param symbol_ ERC-20 symbol of this token
-       * @param decimals_ ERC-20 decimal precision of this token
-       */
-      const { comptroller, erc20, interestRateModel } = await getCErc20Params();
-      await cErc20[
-        'initialize(address,address,address,uint256,string,string,uint8)'
-      ](
+      const accounts = await ethers.getSigners();
+      const cErc20Factory = await ethers.getContractFactory('CErc20Immutable');
+      const cErc20 = await cErc20Factory.deploy(
         erc20?.address,
         comptroller?.address,
         interestRateModel?.address,
         ethers.utils.parseUnits('1', 18),
         'Compond test token',
         'cMytoken',
-        18
+        18,
+        accounts?.[0]?.address
       );
+      await cErc20.deployed();
+
+      console.log('[✅ SUCCESS] cErc20 address: ', cErc20?.address);
 
       /**
        * TODO:  SimplePriceOracle, mint/ redeem
