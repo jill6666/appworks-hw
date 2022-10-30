@@ -17,6 +17,7 @@ import 'hardhat/console.sol';
  * 
  */
 contract TestToken is ERC20 {
-	constructor(uint256 supply, string memory name_, string memory symbol_) ERC20(name_, symbol_) {
+	constructor(uint256 totalSupply, string memory name_, string memory symbol_) ERC20(name_, symbol_) {
+		_mint(msg.sender, totalSupply);
 	}
 }
