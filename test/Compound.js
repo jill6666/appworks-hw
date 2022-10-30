@@ -1,10 +1,6 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
-const getParseUnits = (supply = '0', dicimal = 18) => {
-  return ethers.utils.parseUnits(supply, dicimal);
-};
-
 describe('Compound', function () {
   let erc20;
   let cErc20;
@@ -12,6 +8,9 @@ describe('Compound', function () {
   let interestRateModel;
   let accounts;
 
+  const getParseUnits = (supply = '0', dicimal = 18) => {
+    return ethers.utils.parseUnits(supply, dicimal);
+  };
   const logUserBalance = async (userAddr, token) => {
     const TOKEN_BALANCE = {
       erc20: ethers.utils.formatUnits(await erc20?.balanceOf(userAddr), 18),
