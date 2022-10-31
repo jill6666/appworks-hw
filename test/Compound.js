@@ -70,12 +70,11 @@ describe('Compound', function () {
       'WhitePaperInterestRateModel'
     );
     /**
-     * [題目]: 初始 exchangeRate 為 1:1
-     * [題目]: 將利率模型合約中的借貸利率設定為 0% ❔
+     * [題目]: 將利率模型合約中的借貸利率設定為 0%
      */
     interestRateModel = await interestRateModelFactory?.deploy(
-      getParseUnits(),
-      getParseUnits()
+      getParseUnits('0', 18),
+      getParseUnits('0', 18)
     );
     await interestRateModel?.deployed();
 
@@ -93,6 +92,9 @@ describe('Compound', function () {
       erc20?.address,
       comptroller?.address,
       interestRateModel?.address,
+      /**
+       * [題目]: 初始 exchangeRate 為 1:1
+       */
       getParseUnits('1'),
       'Compond test token',
       'cMytoken',
