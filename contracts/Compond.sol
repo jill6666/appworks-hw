@@ -8,6 +8,9 @@ import 'compound-protocol/contracts/CErc20Immutable.sol';
 import 'compound-protocol/contracts/Comptroller.sol';
 import 'compound-protocol/contracts/WhitePaperInterestRateModel.sol';
 import 'compound-protocol/contracts/SimplePriceOracle.sol';
+import 'compound-protocol/contracts/Unitroller.sol';
+import 'compound-protocol/contracts/CErc20Delegate.sol';
+import 'compound-protocol/contracts/CErc20Delegator.sol';
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
