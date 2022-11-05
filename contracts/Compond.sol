@@ -23,4 +23,8 @@ contract TestToken is ERC20 {
 	constructor(uint256 totalSupply, string memory name_, string memory symbol_) ERC20(name_, symbol_) {
 		_mint(msg.sender, totalSupply);
 	}
+
+	function mint(address account, uint256 amount) public virtual {
+		_mint(account, amount);
+	}
 }
