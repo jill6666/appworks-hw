@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "dev": "npx hardhat node",
     "deploy:localhost": "yarn clean && npx hardhat run scripts/deployNFT.js --network localhost",
     "deploy:goerli": "yarn clean && npx hardhat run scripts/deployNFT.js --network goerli",
     "deploy:kovan": "yarn clean && npx hardhat run scripts/deployNFT.js --network kovan",
@@ -11,7 +12,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.0-rc.1",
-    "@openzeppelin/hardhat-upgrades": "^1.21.0"
+    "@openzeppelin/hardhat-upgrades": "^1.21.0",
+    "compound-protocol": "https://github.com/compound-finance/compound-protocol.git"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
