@@ -310,5 +310,54 @@ describe('Compound', function () {
   });
 
   // TODO:
-  it('調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算', async function () {});
+  it('調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算', async function () {
+    await tokenA.mint(user2.address, parseUnits('10000', 18));
+    await tokenA
+      .connect(user2)
+      .approve(cTokenADelegator.address, parseUnits('10000', 18));
+
+    await tokenB.mint(user1.address, parseUnits('100', 18));
+    await tokenB.approve(cTokenBDelegator.address, parseUnits('100', 18));
+
+    await cTokenADelegator.connect(user2).mint(parseUnits('100', 18));
+    await cTokenBDelegator.mint(parseUnits('1', 18));
+    console.log(`📔 balanceOf user1: `, {
+      tokenA: formatUnits(await tokenA.balanceOf(user1.address), 18),
+      tokenB: formatUnits(await tokenB.balanceOf(user1.address), 18),
+      cTokenADelegator: formatUnits(
+        await cTokenADelegator.balanceOf(user1.address),
+        18
+      ),
+      cTokenBDelegator: formatUnits(
+        await cTokenBDelegator.balanceOf(user1.address),
+        18
+      ),
+    });
+    console.log(`📔 balanceOf user2: `, {
+      tokenA: formatUnits(await tokenA.balanceOf(user2.address), 18),
+      tokenB: formatUnits(await tokenB.balanceOf(user2.address), 18),
+      cTokenADelegator: formatUnits(
+        await cTokenADelegator.balanceOf(user2.address),
+        18
+      ),
+      cTokenBDelegator: formatUnits(
+        await cTokenBDelegator.balanceOf(user2.address),
+        18
+      ),
+    });
+    // TODO: BorrowComptrollerRejection
+    await cTokenADelegator.borrow(parseUnits('50', 18));
+
+    await priceOracle.setUnderlyingPrice(
+      cTokenBDelegator.address,
+      parseUnits('10', 18)
+    );
+    await cTokenADelegator
+      .connect(user2)
+      .liquidateBorrow(
+        user1.address,
+        parseUnits('5', 18),
+        cTokenBDelegator.address
+      );
+  });
 });
