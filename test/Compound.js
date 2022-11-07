@@ -132,31 +132,38 @@ describe('Compound', function () {
 
   // TODO:
   it('調整 token A 的 collateral factor，讓 user1 被 user2 清算', async function () {
-    await tokenB.transfer(user1.address, parseUnits('1000', 18));
-    await tokenA.transfer(user2.address, parseUnits('2000', 18));
+    let liqA = 100;
+    let liqB = 1;
+    let borrowAmount = 50;
 
-    console.log('🚀 user2 存 100 顆 tokenA 進去');
-    await tokenA.connect(user2).approve(cTokenA.address, parseUnits('100', 18));
-    await cTokenA.connect(user2).mint(parseUnits('100', 18));
+    console.log('🚀 owner 存 100 顆 tokenA 進去');
+    await tokenA.approve(cTokenA.address, liqA);
+    await cTokenA.mint(liqA);
 
     console.log('🚀 user1 存 1 顆 tokenB 進去');
-    await tokenB.connect(user1).approve(cTokenB.address, parseUnits('1', 18));
-    await cTokenB.connect(user1).mint(parseUnits('1', 18));
+    await tokenB.transfer(user1.address, liqB);
+    await tokenB.connect(user1).approve(cTokenB.address, liqB);
+    await cTokenB.connect(user1).mint(liqB); // 1:1
+
+    // enterMarkets
+    await comptroller.connect(user1).enterMarkets([cTokenB.address]);
 
     console.log('🚀 user1 借出 50 顆 tokenA...');
-    await cTokenA.connect(user1).borrow(parseUnits('50', 18));
+    await cTokenA.connect(user1).borrow(borrowAmount);
 
     console.log('🚀 調整 collateral factor...');
-    await comptroller._setCollateralFactor(
-      cTokenB.address,
-      parseUnits('0.1', 18)
-    );
+    await comptroller._setCollateralFactor(cTokenB.address, BigInt(0.4 * 1e18));
 
-    // TODO: Error: VM Exception while processing transaction: reverted with reason string 'ERC20: insufficient allowance'
     console.log('🚀 user2 開始清算 user1...');
-    await cTokenA
-      .connect(user2)
-      .liquidateBorrow(user1.address, parseUnits('25', 18), cTokenB.address);
+    let borrowBalance = await cTokenA
+      .connect(user1)
+      .callStatic.borrowBalanceCurrent(user1.address);
+
+    let repayAmount =
+      (BigInt(borrowBalance) * BigInt(0.5 * 1e18)) / BigInt(1e18);
+
+    await tokenA.approve(cTokenA.address, repayAmount);
+    await cTokenA.liquidateBorrow(user1.address, repayAmount, cTokenB.address);
   });
 
   // TODO:
