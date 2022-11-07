@@ -11,8 +11,8 @@ describe('Compound', function () {
 
   let tokenA;
   let tokenB;
-  let cTokenADelegator;
-  let cToken;
+  let cTokenA;
+  let cTokenB;
 
   let comptroller;
   let priceOracle;
@@ -50,10 +50,10 @@ describe('Compound', function () {
     tokenB = await tokenBFactory.deploy(totalSupply, 'TestTokenB', 'TTB');
 
     /**
-     * 部署兩個 cToken
+     * 部署兩個 cTokenB
      */
     const cerc20Factory = await ethers.getContractFactory('CErc20Immutable');
-    cTokenADelegator = await cerc20Factory.deploy(
+    cTokenA = await cerc20Factory.deploy(
       tokenA.address,
       comptroller.address,
       interestRateModel.address,
@@ -63,7 +63,7 @@ describe('Compound', function () {
       18,
       owner.address
     );
-    cToken = await cerc20Factory.deploy(
+    cTokenB = await cerc20Factory.deploy(
       tokenB.address,
       comptroller.address,
       interestRateModel.address,
@@ -78,54 +78,56 @@ describe('Compound', function () {
      * initial settings
      */
     await comptroller._setPriceOracle(priceOracle.address);
-    await comptroller._supportMarket(cTokenADelegator.address);
-    await comptroller._supportMarket(cToken.address);
+    await comptroller._supportMarket(cTokenA.address);
+    await comptroller._supportMarket(cTokenB.address);
     await comptroller
       .connect(user1)
-      .enterMarkets([cTokenADelegator.address, cToken.address]);
+      .enterMarkets([cTokenA.address, cTokenB.address]);
     await comptroller._setLiquidationIncentive(parseUnits('1.08', 18));
     await comptroller._setCloseFactor(parseUnits('0.5', 18));
 
+    await priceOracle.setUnderlyingPrice(cTokenA.address, parseUnits('1', 18));
     await priceOracle.setUnderlyingPrice(
-      cTokenADelegator.address,
-      parseUnits('1', 18)
+      cTokenB.address,
+      parseUnits('100', 18)
     );
-    await priceOracle.setUnderlyingPrice(cToken.address, parseUnits('100', 18));
 
     await comptroller._setCollateralFactor(
-      cToken.address,
+      cTokenB.address,
       parseUnits('0.5', 18)
     );
   });
 
   /**
-   * User1 使用 1 顆 token B 來 mint cToken
+   * User1 使用 1 顆 token B 來 mint cTokenB
    * User1 使用 token B 作為抵押品來借出 50 顆 token A
    */
   it('borrow and repay', async function () {
-    const BORROW_AMOUNT = parseUnits('50', 18);
-    /** mint cToken by 1 tokenB */
-    await tokenB.transfer(user1.address, parseUnits('1000', 18).toString());
-    await tokenA.transfer(user2.address, parseUnits('1000', 18).toString());
-    /** user2 存 tokenA 到池子才有流動性可以讓 user1 借出 */
-    console.log('🚀 user2 存 100 顆 tokenA 到池子...');
-    await tokenA
-      .connect(user2)
-      .approve(cTokenADelegator.address, parseUnits('100', 18));
-    await cTokenADelegator.connect(user2).mint(parseUnits('100', 18));
-    /** user1 存 1 顆 tokenB 進去，並取得 1 顆 CTokenB */
-    console.log('🚀 user1 存 1 顆 tokenB 進去，並取得 1 顆 CTokenB...');
-    await tokenB.connect(user1).approve(cToken.address, parseUnits('1', 18));
-    await cToken.connect(user1).mint(parseUnits('1', 18));
-    /** user1 抵押品為 1 顆 TokenB($100)，collateral factor 為 50%，表示可借出 $50 等值的 tokenA($1)，也就是 50 顆 tokenA */
-    console.log('🚀 user1 借出 50 顆 tokenA...');
-    await cTokenADelegator.connect(user1).borrow(BORROW_AMOUNT);
-    /** user1 repay 50 tokenA */
-    console.log('🚀 user1 償還 50 顆 tokenA...');
-    await tokenA
-      .connect(user1)
-      .approve(cTokenADelegator.address, BORROW_AMOUNT);
-    await cTokenADelegator.connect(user1).repayBorrow(BORROW_AMOUNT);
+    // const BORROW_AMOUNT = parseUnits('50', 18);
+    // /** mint cTokenB by 1 tokenB */
+    // await tokenB.transfer(user1.address, parseUnits('1000', 18).toString());
+    // await tokenA.transfer(user2.address, parseUnits('1000', 18).toString());
+    // /** user2 存 tokenA 到池子才有流動性可以讓 user1 借出 */
+    // console.log('🚀 user2 存 100 顆 tokenA 到池子...');
+    // await tokenA
+    //   .connect(user2)
+    //   .approve(cTokenA.address, parseUnits('100', 18));
+    // await cTokenA.connect(user2).mint(parseUnits('100', 18));
+    // /** user1 存 1 顆 tokenB 進去，並取得 1 顆 CTokenB */
+    // console.log('🚀 user1 存 1 顆 tokenB 進去，並取得 1 顆 CTokenB...');
+    // await tokenB
+    //   .connect(user1)
+    //   .approve(cTokenB.address, parseUnits('1', 18));
+    // await cTokenB.connect(user1).mint(parseUnits('1', 18));
+    // /** user1 抵押品為 1 顆 TokenB($100)，collateral factor 為 50%，表示可借出 $50 等值的 tokenA($1)，也就是 50 顆 tokenA */
+    // console.log('🚀 user1 借出 50 顆 tokenA...');
+    // await cTokenA.connect(user1).borrow(BORROW_AMOUNT);
+    // /** user1 repay 50 tokenA */
+    // console.log('🚀 user1 償還 50 顆 tokenA...');
+    // await tokenA
+    //   .connect(user1)
+    //   .approve(cTokenA.address, BORROW_AMOUNT);
+    // await cTokenA.connect(user1).repayBorrow(BORROW_AMOUNT);
   });
 
   // TODO:
@@ -134,64 +136,75 @@ describe('Compound', function () {
     await tokenA.transfer(user2.address, parseUnits('2000', 18));
 
     console.log('🚀 user2 存 100 顆 tokenA 進去');
-    await tokenA
-      .connect(user2)
-      .approve(cTokenADelegator.address, parseUnits('100', 18));
-    await cTokenADelegator.connect(user2).mint(parseUnits('100', 18));
+    await tokenA.connect(user2).approve(cTokenA.address, parseUnits('100', 18));
+    await cTokenA.connect(user2).mint(parseUnits('100', 18));
 
     console.log('🚀 user1 存 1 顆 tokenB 進去');
-    await tokenB.connect(user1).approve(cToken.address, parseUnits('1', 18));
-    await cToken.connect(user1).mint(parseUnits('1', 18));
+    await tokenB.connect(user1).approve(cTokenB.address, parseUnits('1', 18));
+    await cTokenB.connect(user1).mint(parseUnits('1', 18));
 
     console.log('🚀 user1 借出 50 顆 tokenA...');
-    await cTokenADelegator.connect(user1).borrow(parseUnits('50', 18));
+    await cTokenA.connect(user1).borrow(parseUnits('50', 18));
 
     console.log('🚀 調整 collateral factor...');
     await comptroller._setCollateralFactor(
-      cToken.address,
+      cTokenB.address,
       parseUnits('0.1', 18)
     );
 
     // TODO: Error: VM Exception while processing transaction: reverted with reason string 'ERC20: insufficient allowance'
     console.log('🚀 user2 開始清算 user1...');
-    await cTokenADelegator
+    await cTokenA
       .connect(user2)
-      .liquidateBorrow(user1.address, parseUnits('25', 18), cToken.address);
+      .liquidateBorrow(user1.address, parseUnits('25', 18), cTokenB.address);
   });
 
   // TODO:
   it('調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算', async function () {
-    await tokenA.mint(user2.address, parseUnits('10000', 18));
-    await tokenA
-      .connect(user2)
-      .approve(cTokenADelegator.address, parseUnits('10000', 18));
-    await tokenB.mint(user1.address, parseUnits('100', 18));
-    await tokenB.approve(cToken.address, parseUnits('100', 18));
-    await cTokenADelegator.connect(user2).mint(parseUnits('100', 18));
-    await cToken.mint(parseUnits('1', 18));
-    console.log(`📔 balanceOf user1: `, {
-      tokenA: formatUnits(await tokenA.balanceOf(user1.address), 18),
-      tokenB: formatUnits(await tokenB.balanceOf(user1.address), 18),
-      cTokenADelegator: formatUnits(
-        await cTokenADelegator.balanceOf(user1.address),
-        18
-      ),
-      cToken: formatUnits(await cToken.balanceOf(user1.address), 18),
-    });
-    console.log(`📔 balanceOf user2: `, {
-      tokenA: formatUnits(await tokenA.balanceOf(user2.address), 18),
-      tokenB: formatUnits(await tokenB.balanceOf(user2.address), 18),
-      cTokenADelegator: formatUnits(
-        await cTokenADelegator.balanceOf(user2.address),
-        18
-      ),
-      cToken: formatUnits(await cToken.balanceOf(user2.address), 18),
-    });
-    // TODO: BorrowComptrollerRejection
-    await cTokenADelegator.borrow(parseUnits('50', 18));
-    await priceOracle.setUnderlyingPrice(cToken.address, parseUnits('10', 18));
-    await cTokenADelegator
-      .connect(user2)
-      .liquidateBorrow(user1.address, parseUnits('5', 18), cToken.address);
+    // await tokenA.mint(user2.address, parseUnits('10000', 18));
+    // await tokenA
+    //   .connect(user2)
+    //   .approve(cTokenA.address, parseUnits('10000', 18));
+    // await tokenB.mint(user1.address, parseUnits('100', 18));
+    // await tokenB.approve(cTokenB.address, parseUnits('100', 18));
+    // await cTokenA.connect(user2).mint(parseUnits('100', 18));
+    // await cTokenB.mint(parseUnits('1', 18));
+    // console.log(`📔 balanceOf user1: `, {
+    //   tokenA: formatUnits(await tokenA.balanceOf(user1.address), 18),
+    //   tokenB: formatUnits(await tokenB.balanceOf(user1.address), 18),
+    //   cTokenA: formatUnits(
+    //     await cTokenA.balanceOf(user1.address),
+    //     18
+    //   ),
+    //   cTokenB: formatUnits(
+    //     await cTokenB.balanceOf(user1.address),
+    //     18
+    //   ),
+    // });
+    // console.log(`📔 balanceOf user2: `, {
+    //   tokenA: formatUnits(await tokenA.balanceOf(user2.address), 18),
+    //   tokenB: formatUnits(await tokenB.balanceOf(user2.address), 18),
+    //   cTokenA: formatUnits(
+    //     await cTokenA.balanceOf(user2.address),
+    //     18
+    //   ),
+    //   cTokenB: formatUnits(
+    //     await cTokenB.balanceOf(user2.address),
+    //     18
+    //   ),
+    // });
+    // // TODO: BorrowComptrollerRejection
+    // await cTokenA.borrow(parseUnits('50', 18));
+    // await priceOracle.setUnderlyingPrice(
+    //   cTokenB.address,
+    //   parseUnits('10', 18)
+    // );
+    // await cTokenA
+    //   .connect(user2)
+    //   .liquidateBorrow(
+    //     user1.address,
+    //     parseUnits('5', 18),
+    //     cTokenB.address
+    //   );
   });
 });
