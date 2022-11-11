@@ -1,7 +1,6 @@
 const { ethers } = require("hardhat");
-const { parseUnits, formatUnits } = require("ethers/lib/utils");
+const { parseUnits } = require("ethers/lib/utils");
 const { expect } = require("chai");
-const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
 let accounts;
 let owner;
@@ -104,29 +103,6 @@ describe("Compound", function () {
    * User1 使用 token B 作為抵押品來借出 50 顆 token A
    */
   it("borrow and repay", async function () {
-    const BORROW_AMOUNT = parseUnits("50", 18);
-    /** mint cTokenB by 1 tokenB */
-    await tokenB.transfer(user1.address, parseUnits("1000", 18).toString());
-    await tokenA.transfer(user2.address, parseUnits("1000", 18).toString());
-    /** user2 存 tokenA 到池子才有流動性可以讓 user1 借出 */
-    console.log("🚀 user2 存 100 顆 tokenA 到池子...");
-    await tokenA.connect(user2).approve(cTokenA.address, parseUnits("100", 18));
-    await cTokenA.connect(user2).mint(parseUnits("100", 18));
-    /** user1 存 1 顆 tokenB 進去，並取得 1 顆 CTokenB */
-    console.log("🚀 user1 存 1 顆 tokenB 進去，並取得 1 顆 CTokenB...");
-    await tokenB.connect(user1).approve(cTokenB.address, parseUnits("1", 18));
-    await cTokenB.connect(user1).mint(parseUnits("1", 18));
-    /** user1 抵押品為 1 顆 TokenB($100)，collateral factor 為 50%，表示可借出 $50 等值的 tokenA($1)，也就是 50 顆 tokenA */
-    console.log("🚀 user1 借出 50 顆 tokenA...");
-    await cTokenA.connect(user1).borrow(BORROW_AMOUNT);
-    /** user1 repay 50 tokenA */
-    console.log("🚀 user1 償還 50 顆 tokenA...");
-    await tokenA.connect(user1).approve(cTokenA.address, BORROW_AMOUNT);
-    await cTokenA.connect(user1).repayBorrow(BORROW_AMOUNT);
-  });
-
-  // TODO:
-  it("調整 token A 的 collateral factor，讓 user1 被 user2 清算", async function () {
     let liqA = 100;
     let liqB = 1;
     let borrowAmount = 50;
@@ -141,6 +117,32 @@ describe("Compound", function () {
     await tokenB.connect(user1).approve(cTokenB.address, liqB);
     await cTokenB.connect(user1).mint(liqB);
     expect(await cTokenB.balanceOf(user1.address)).to.eq(liqB);
+
+    console.log("🚀 user1 借出 50 顆 tokenA...");
+    await cTokenA.connect(user1).borrow(borrowAmount);
+
+    /** user1 repay 50 tokenA */
+    console.log("🚀 user1 償還 50 顆 tokenA...");
+    await tokenA.connect(user1).approve(cTokenA.address, borrowAmount);
+    await cTokenA.connect(user1).repayBorrow(borrowAmount);
+  });
+
+  // TODO:
+  it("調整 token A 的 collateral factor，讓 user1 被 user2 清算", async function () {
+    let liqA = 100;
+    let liqB = 1;
+    let borrowAmount = 50;
+
+    console.log("🚀 owner 存 100 顆 tokenA 進去");
+    await tokenA.approve(cTokenA.address, liqA);
+    await cTokenA.mint(liqA);
+    expect(await cTokenA.balanceOf(owner.address)).to.eq(200);
+
+    console.log("🚀 user1 存 1 顆 tokenB 進去");
+    await tokenB.transfer(user1.address, liqB);
+    await tokenB.connect(user1).approve(cTokenB.address, liqB);
+    await cTokenB.connect(user1).mint(liqB);
+    expect(await cTokenB.balanceOf(user1.address)).to.eq(2);
 
     console.log("🚀 user1 借出 50 顆 tokenA...");
     await cTokenA.connect(user1).borrow(borrowAmount);
@@ -169,7 +171,6 @@ describe("Compound", function () {
     await cTokenA.liquidateBorrow(user1.address, repayAmount, cTokenB.address);
   });
 
-  // TODO:
   it("調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算", async function () {
     let liqA = 100;
     let liqB = 1;
@@ -178,13 +179,13 @@ describe("Compound", function () {
     console.log("🚀 owner 存 100 顆 tokenA 進去");
     await tokenA.approve(cTokenA.address, liqA);
     await cTokenA.mint(liqA);
-    expect(await cTokenA.balanceOf(owner.address)).to.eq(liqA);
+    expect(await cTokenA.balanceOf(owner.address)).to.eq(300);
 
     console.log("🚀 user1 存 1 顆 tokenB 進去");
     await tokenB.transfer(user1.address, liqB);
     await tokenB.connect(user1).approve(cTokenB.address, liqB);
     await cTokenB.connect(user1).mint(liqB);
-    expect(await cTokenB.balanceOf(user1.address)).to.eq(liqB);
+    expect(await cTokenB.balanceOf(user1.address)).to.eq(3);
 
     console.log("🚀 user1 借出 50 顆 tokenA...");
     await cTokenA.connect(user1).borrow(borrowAmount);
@@ -193,7 +194,7 @@ describe("Compound", function () {
       await cTokenA
         .connect(user1)
         .callStatic.borrowBalanceCurrent(user1.address)
-    ).to.eq(borrowAmount);
+    ).to.eq(100);
     // ----------------------------------------------------------------
     await priceOracle.setUnderlyingPrice(cTokenB.address, parseUnits("50", 18));
 
