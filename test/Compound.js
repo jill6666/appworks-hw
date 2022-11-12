@@ -93,7 +93,7 @@ const init = async () => {
   );
 };
 
-describe("Compound", function () {
+describe("Compound", function() {
   this.beforeEach(async () => {
     await init();
   });
@@ -102,7 +102,7 @@ describe("Compound", function () {
    * User1 使用 1 顆 token B 來 mint cTokenB
    * User1 使用 token B 作為抵押品來借出 50 顆 token A
    */
-  it("borrow and repay", async function () {
+  it("borrow and repay", async function() {
     let liqA = 100;
     let liqB = 1;
     let borrowAmount = 50;
@@ -124,6 +124,8 @@ describe("Compound", function () {
     /** user1 repay 50 tokenA */
     await tokenA.connect(user1).approve(cTokenA.address, borrowAmount);
     await cTokenA.connect(user1).repayBorrow(borrowAmount);
+
+    expect(await cTokenA.balanceOf(user1.address)).to.eq(0);
   });
 
   it("調整 token A 的 collateral factor，讓 user1 被 user2 清算", async function() {
@@ -155,7 +157,6 @@ describe("Compound", function () {
       parseUnits("0.4", 18)
     );
 
-    /** user2 開始清算 user1...") */
     let borrowBalance = await cTokenA
       .connect(user1)
       .callStatic.borrowBalanceCurrent(user1.address);
@@ -165,6 +166,9 @@ describe("Compound", function () {
 
     await tokenA.approve(cTokenA.address, repayAmount);
     await cTokenA.liquidateBorrow(user1.address, repayAmount, cTokenB.address);
+
+    expect(await cTokenA.balanceOf(user1.address)).to.eq(0);
+    expect(await cTokenB.balanceOf(user1.address)).to.eq(1);
   });
 
   it("調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算", async function() {
@@ -192,7 +196,6 @@ describe("Compound", function () {
 
     await priceOracle.setUnderlyingPrice(cTokenB.address, parseUnits("50", 18));
 
-    /** user2 開始清算 user1... */
     let borrowBalance = await cTokenA
       .connect(user1)
       .callStatic.borrowBalanceCurrent(user1.address);
@@ -202,5 +205,8 @@ describe("Compound", function () {
 
     await tokenA.approve(cTokenA.address, repayAmount);
     await cTokenA.liquidateBorrow(user1.address, repayAmount, cTokenB.address);
+
+    expect(await cTokenA.balanceOf(user1.address)).to.eq(0);
+    expect(await cTokenB.balanceOf(user1.address)).to.eq(1);
   });
 });
