@@ -1,12 +1,12 @@
-require('@nomicfoundation/hardhat-toolbox');
-require('@openzeppelin/hardhat-upgrades');
-require('@nomiclabs/hardhat-etherscan');
-require('dotenv').config();
+require("@nomicfoundation/hardhat-toolbox");
+require("@openzeppelin/hardhat-upgrades");
+require("@nomiclabs/hardhat-etherscan");
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: '0.8.16',
+    version: "0.8.16",
     settings: {
       optimizer: {
         enabled: true,
@@ -22,9 +22,9 @@ module.exports = {
     hardhat: {
       forking: {
         url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
-        enabled: true,
-        // blockNumber: 1439000,
+        blockNumber: 15815693,
       },
+      allowUnlimitedContractSize: true,
     },
   },
   etherscan: {
