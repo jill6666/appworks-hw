@@ -126,7 +126,6 @@ describe("Compound", function () {
     await cTokenA.connect(user1).repayBorrow(borrowAmount);
   });
 
-  // TODO:
   it("調整 token A 的 collateral factor，讓 user1 被 user2 清算", async function() {
     let liqA = 100;
     let liqB = 1;
