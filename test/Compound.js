@@ -94,7 +94,7 @@ const init = async () => {
 };
 
 describe("Compound", function () {
-  before(async () => {
+  this.beforeEach(async () => {
     await init();
   });
 
