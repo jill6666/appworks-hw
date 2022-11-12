@@ -17,7 +17,18 @@ yarn dev
 yarn test ./test/Compound.js
 ```
 
-題目說明：
+### .env 參數
+
+```
+INFURA_API_KEY=
+ETHERSCAN_API_KEY=
+ALCHEMY_API_KEY=
+
+PRIVATE_KEY=
+PRIVATE_KEY_2=
+```
+
+### 題目說明：
 
 ```
 請賞析 Compound 的合約，並依序實作以下
