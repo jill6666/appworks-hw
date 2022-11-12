@@ -107,44 +107,41 @@ describe("Compound", function () {
     let liqB = 1;
     let borrowAmount = 50;
 
-    console.log("🚀 owner 存 100 顆 tokenA 進去");
+    /** owner 存 100 顆 tokenA 進去") */
     await tokenA.approve(cTokenA.address, liqA);
     await cTokenA.mint(liqA);
     expect(await cTokenA.balanceOf(owner.address)).to.eq(liqA);
 
-    console.log("🚀 user1 存 1 顆 tokenB 進去");
+    /** user1 存 1 顆 tokenB 進去") */
     await tokenB.transfer(user1.address, liqB);
     await tokenB.connect(user1).approve(cTokenB.address, liqB);
     await cTokenB.connect(user1).mint(liqB);
     expect(await cTokenB.balanceOf(user1.address)).to.eq(liqB);
 
-    console.log("🚀 user1 借出 50 顆 tokenA...");
+    /** user1 借出 50 顆 tokenA...") */
     await cTokenA.connect(user1).borrow(borrowAmount);
 
     /** user1 repay 50 tokenA */
-    console.log("🚀 user1 償還 50 顆 tokenA...");
     await tokenA.connect(user1).approve(cTokenA.address, borrowAmount);
     await cTokenA.connect(user1).repayBorrow(borrowAmount);
   });
 
   // TODO:
-  it("調整 token A 的 collateral factor，讓 user1 被 user2 清算", async function () {
+  it("調整 token A 的 collateral factor，讓 user1 被 user2 清算", async function() {
     let liqA = 100;
     let liqB = 1;
     let borrowAmount = 50;
 
-    console.log("🚀 owner 存 100 顆 tokenA 進去");
+    /** owner 存 100 顆 tokenA 進去") */
     await tokenA.approve(cTokenA.address, liqA);
     await cTokenA.mint(liqA);
-    expect(await cTokenA.balanceOf(owner.address)).to.eq(200);
 
-    console.log("🚀 user1 存 1 顆 tokenB 進去");
+    /** user1 存 1 顆 tokenB 進去") */
     await tokenB.transfer(user1.address, liqB);
     await tokenB.connect(user1).approve(cTokenB.address, liqB);
     await cTokenB.connect(user1).mint(liqB);
-    expect(await cTokenB.balanceOf(user1.address)).to.eq(2);
 
-    console.log("🚀 user1 借出 50 顆 tokenA...");
+    /** user1 借出 50 顆 tokenA...") */
     await cTokenA.connect(user1).borrow(borrowAmount);
 
     expect(
@@ -153,13 +150,13 @@ describe("Compound", function () {
         .callStatic.borrowBalanceCurrent(user1.address)
     ).to.eq(borrowAmount);
 
-    console.log("🚀 調整 collateral factor...");
+    /** 調整 collateral factor...") */
     await comptroller._setCollateralFactor(
       cTokenB.address,
       parseUnits("0.4", 18)
     );
 
-    console.log("🚀 user2 開始清算 user1...");
+    /** user2 開始清算 user1...") */
     let borrowBalance = await cTokenA
       .connect(user1)
       .callStatic.borrowBalanceCurrent(user1.address);
@@ -171,34 +168,32 @@ describe("Compound", function () {
     await cTokenA.liquidateBorrow(user1.address, repayAmount, cTokenB.address);
   });
 
-  it("調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算", async function () {
+  it("調整 oracle 中的 token B 的價格，讓 user1 被 user2 清算", async function() {
     let liqA = 100;
     let liqB = 1;
     let borrowAmount = 50;
 
-    console.log("🚀 owner 存 100 顆 tokenA 進去");
+    /** owner 存 100 顆 tokenA 進去 */
     await tokenA.approve(cTokenA.address, liqA);
     await cTokenA.mint(liqA);
-    expect(await cTokenA.balanceOf(owner.address)).to.eq(300);
 
-    console.log("🚀 user1 存 1 顆 tokenB 進去");
+    /** user1 存 1 顆 tokenB 進去 */
     await tokenB.transfer(user1.address, liqB);
     await tokenB.connect(user1).approve(cTokenB.address, liqB);
     await cTokenB.connect(user1).mint(liqB);
-    expect(await cTokenB.balanceOf(user1.address)).to.eq(3);
 
-    console.log("🚀 user1 借出 50 顆 tokenA...");
+    /** user1 借出 50 顆 tokenA... */
     await cTokenA.connect(user1).borrow(borrowAmount);
 
     expect(
       await cTokenA
         .connect(user1)
         .callStatic.borrowBalanceCurrent(user1.address)
-    ).to.eq(100);
-    // ----------------------------------------------------------------
+    ).to.eq(borrowAmount);
+
     await priceOracle.setUnderlyingPrice(cTokenB.address, parseUnits("50", 18));
 
-    console.log("🚀 user2 開始清算 user1...");
+    /** user2 開始清算 user1... */
     let borrowBalance = await cTokenA
       .connect(user1)
       .callStatic.borrowBalanceCurrent(user1.address);
