@@ -15,10 +15,6 @@ module.exports = {
     },
   },
   networks: {
-    goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: [`${process.env.PRIVATE_KEY}`],
-    },
     hardhat: {
       forking: {
         url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
@@ -26,8 +22,5 @@ module.exports = {
       },
       allowUnlimitedContractSize: true,
     },
-  },
-  etherscan: {
-    apiKey: `${process.env.ETHERSCAN_API_KEY}`,
   },
 };
